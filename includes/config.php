@@ -15,8 +15,9 @@ $config = [
         'Views' => 'Jetpack Compose',
         'ModelView' => 'ModelView',
         'MVVM' => 'MVVM'
-    ]
-    ];
+    ],
+    'excluded_files' => ['README.md', '.gitigore', 'index.md']
+];
 
 function get_github_edit_url($file_path) {
     global $config;
@@ -40,5 +41,39 @@ function get_page_title() {
         }
     }
 }
+
+function scan_directory($dir, $base_path = '') {
+    global $config;
+
+    $items = [];
+    $files = scandir($dir);
+
+    foreach ($files as $file) {
+        if($file[0] === '.' || in_array($file, $config['excluded_files'])) {
+            continue;
+        }
+
+        $path = $dir . '/' . $file;
+        $relative_path = $base_path ? $base_path . '/' . $file : $file;
+
+        if(is_dir($path)) {
+            $sub_items = scan_directory($path, $relative_path);
+            if(!empty($sub_items)) {
+                $items[$file] = $sub_items;
+            } elseif (pathinfo($file, PATHINFO_EXTENSION) === 'md') {
+                $items[] = $relative_path;
+            }
+        }
+    }
+    return $items;
+}
+
+function format_title($name) {
+    $name = preg_replace('/\.md$/', '', $name);
+    $name = str_replace(['-', '_'], ' ', $name);
+    return ucwords($name);
+}
+
+
 
 ?>
